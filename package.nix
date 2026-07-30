@@ -8,6 +8,10 @@ python3Packages.buildPythonApplication rec {
 
   pyproject = true;
 
+  dependencies = with python3Packages; [
+    tabulate
+  ];
+
   nativeBuildInputs = [ python3Packages.setuptools ];
 
   meta.mainProgram = "mtcalc";
