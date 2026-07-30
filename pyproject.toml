@@ -16,3 +16,4 @@ mtcalc = "main:main"
 
 [tool.setuptools]
 py-modules = ["main", "calc"]
+package-dir = {"": "src"}
