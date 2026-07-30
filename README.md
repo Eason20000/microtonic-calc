@@ -4,11 +4,19 @@ n-EDO Scale Tune SysEx parameter calculator for MIDI devices.
 
 ## Usage
 
+Install and use the `mtcalc` command:
+
 ```bash
-python -m main --help
+pip install . && mtcalc --help
 ```
 
-Or via Nix:
+Or run directly from source without installing:
+
+```bash
+python -m src.main --help
+```
+
+Or run via Nix:
 
 ```bash
 nix run . -- --help
