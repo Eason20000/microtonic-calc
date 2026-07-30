@@ -1,16 +1,25 @@
-from math import ceil
+from math import ceil, floor
 
 NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 
+def _round_half_up(x):
+    return floor(x + 0.5)
+
+
 def _quantize(value, step):
-    return round(value / step) * step
+    return _round_half_up(value / step) * step
+
+
+def _cents_to_sysex(cents, step, bias):
+    return _round_half_up(cents / step) + bias
 
 
 def compute_edo(n, range_neg=-64, range_pos=63, step=1.0, max_m=16):
+    bias = _round_half_up(-range_neg / step)
     m = ceil(n / 12)
     while m <= max_m:
-        result = _try_assign(n, m, range_neg, range_pos, step)
+        result = _try_assign(n, m, range_neg, range_pos, step, bias)
         if result is not None:
             return result
         m += 1
@@ -21,42 +30,40 @@ def compute_edo(n, range_neg=-64, range_pos=63, step=1.0, max_m=16):
     )
 
 
-def _try_assign(n, m, range_neg, range_pos, step):
+def _try_assign(n, m, range_neg, range_pos, step, bias):
     channels = [{"channel": ch, "offsets": [None] * 12} for ch in range(m)]
-    degrees = []
+    map_entries = []
 
     for i in range(n):
         cents = i * 1200.0 / n
         ch = i % m
 
-        t_floor = int(cents / 100)
+        t_floor = floor(cents / 100)
         off_floor = _quantize(cents - t_floor * 100, step)
 
-        t_ceil = int(cents / 100 + 0.5)
-        off_ceil = _quantize(cents - t_ceil * 100, step) if t_ceil != t_floor else None
+        t_round = _round_half_up(cents / 100)
+        off_round = _quantize(cents - t_round * 100, step) if t_round != t_floor else None
 
         candidates = []
         if range_neg <= off_floor <= range_pos:
             candidates.append((t_floor, off_floor))
-        if off_ceil is not None and range_neg <= off_ceil <= range_pos:
-            candidates.append((t_ceil, off_ceil))
+        if off_round is not None and range_neg <= off_round <= range_pos:
+            candidates.append((t_round, off_round))
 
         assigned = False
         for target_semi, offset in candidates:
             note_in_oct = target_semi % 12
+            sysex_val = _cents_to_sysex(offset, step, bias)
             existing = channels[ch]["offsets"][note_in_oct]
-            if existing is not None and existing != offset:
+            if existing is not None and existing != sysex_val:
                 continue
             if existing is None:
-                channels[ch]["offsets"][note_in_oct] = offset
-            error = cents - (target_semi * 100 + offset)
-            degrees.append({
+                channels[ch]["offsets"][note_in_oct] = sysex_val
+            map_entries.append({
                 "degree": i,
-                "cents": cents,
                 "channel": ch,
                 "note_name": NOTE_NAMES[note_in_oct],
-                "offset": offset,
-                "error": error,
+                "sysex_value": sysex_val,
             })
             assigned = True
             break
@@ -64,12 +71,12 @@ def _try_assign(n, m, range_neg, range_pos, step):
         if not assigned:
             return None
 
-    max_error = max(abs(d["error"]) for d in degrees) if degrees else 0
-
     return {
-        "n": n,
-        "m": m,
-        "channels": channels,
-        "degrees": degrees,
-        "max_error": max_error,
+        "edo": n,
+        "sysex": {
+            "step": step,
+            "bias": bias,
+            "data": channels,
+        },
+        "map": map_entries,
     }
