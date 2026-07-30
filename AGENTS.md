@@ -17,7 +17,7 @@ python -m main --edo 53
 --range-neg F    # override preset
 --range-pos F    # override preset
 --step F|A/B     # override preset (supports fraction, e.g. 100/8192)
---max-m N        # default 16
+--max-channels N  # default 16
 --output {text,json}  # default text
 ```
 
@@ -25,12 +25,12 @@ python -m main --edo 53
 
 | File | Role |
 |---|---|
-| `calc.py` | Pure computation. `compute_edo(n, range_neg, range_pos, step, max_m)` → dict. No I/O. |
+| `calc.py` | Pure computation. `compute_edo(n, range_neg, range_pos, step, max_channels)` → dict. No I/O. |
 | `main.py` | CLI arg parsing, preset resolution, display. Derives `channel_count`, `max_error` itself. |
 
 ## Data contract
 
-`calc.py` returns `{edo, sysex: {step, bias, data: [{channel, offsets: [12 x int_or_None}]}, map: [{degree, channel, note_name, sysex_value}]}`.
+`calc.py` returns `{edo, sysex: {step, bias, data: [{channel, offsets: [12 x int_or_None}]}, map: [{degree, channel, semitone, sysex_value}]}`.
 
 - `sysex.data[].offsets[]` are raw integers (bias + cents/step), ready to send to device
 - `map[].sysex_value` matches the channel's offset for that degree
@@ -55,11 +55,11 @@ Explicit `--range-neg`/`--range-pos`/`--step` override the preset. Display label
 
 ## Slot assignment
 
-- Degrees are interleaved across channels: `i % m`
+- Degrees are interleaved across channels: `i % channels`
 - `t_floor` candidate preferred (keeps note in same octave); fallback to `t_round`
 - If two degrees share a slot with the same quantized sysex value, they share successfully
-- If no candidate fits, m is incremented up to `--max-m` (default 16)
-- `m` is the result of the search, not pre-computed as `ceil(n/12)`
+- If no candidate fits, channels is incremented up to `--max-channels` (default 16)
+- `channels` is the result of the search, not pre-computed as `ceil(n/12)`
 
 ## Commit style
 

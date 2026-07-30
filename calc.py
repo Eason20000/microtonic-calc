@@ -1,7 +1,5 @@
 from math import ceil, floor
 
-NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-
 
 def _round_half_up(x):
     return floor(x + 0.5)
@@ -15,28 +13,28 @@ def _cents_to_sysex(cents, step, bias):
     return _round_half_up(cents / step) + bias
 
 
-def compute_edo(n, range_neg=-64, range_pos=63, step=1.0, max_m=16):
+def compute_edo(n, range_neg=-64, range_pos=63, step=1.0, max_channels=16):
     bias = _round_half_up(-range_neg / step)
-    m = ceil(n / 12)
-    while m <= max_m:
-        result = _try_assign(n, m, range_neg, range_pos, step, bias)
+    channels = ceil(n / 12)
+    while channels <= max_channels:
+        result = _try_assign(n, channels, range_neg, range_pos, step, bias)
         if result is not None:
             return result
-        m += 1
+        channels += 1
     raise RuntimeError(
         f"cannot assign {n}-EDO: "
         f"range=[{range_neg}, {range_pos}] step={step} "
-        f"no valid assignment within {max_m} channels"
+        f"no valid assignment within {max_channels} channels"
     )
 
 
-def _try_assign(n, m, range_neg, range_pos, step, bias):
-    channels = [{"channel": ch, "offsets": [None] * 12} for ch in range(m)]
+def _try_assign(n, num_channels, range_neg, range_pos, step, bias):
+    channel_data = [{"channel": ch, "offsets": [None] * 12} for ch in range(num_channels)]
     map_entries = []
 
     for i in range(n):
         cents = i * 1200.0 / n
-        ch = i % m
+        ch = i % num_channels
 
         t_floor = floor(cents / 100)
         off_floor = _quantize(cents - t_floor * 100, step)
@@ -54,15 +52,15 @@ def _try_assign(n, m, range_neg, range_pos, step, bias):
         for target_semi, offset in candidates:
             note_in_oct = target_semi % 12
             sysex_val = _cents_to_sysex(offset, step, bias)
-            existing = channels[ch]["offsets"][note_in_oct]
+            existing = channel_data[ch]["offsets"][note_in_oct]
             if existing is not None and existing != sysex_val:
                 continue
             if existing is None:
-                channels[ch]["offsets"][note_in_oct] = sysex_val
+                channel_data[ch]["offsets"][note_in_oct] = sysex_val
             map_entries.append({
                 "degree": i,
                 "channel": ch,
-                "note_name": NOTE_NAMES[note_in_oct],
+                "semitone": note_in_oct,
                 "sysex_value": sysex_val,
             })
             assigned = True
@@ -76,7 +74,7 @@ def _try_assign(n, m, range_neg, range_pos, step, bias):
         "sysex": {
             "step": step,
             "bias": bias,
-            "data": channels,
+            "data": channel_data,
         },
         "map": map_entries,
     }

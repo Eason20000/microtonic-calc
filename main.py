@@ -1,7 +1,9 @@
 import argparse
 import json
 from tabulate import tabulate
-from calc import compute_edo, NOTE_NAMES
+from calc import compute_edo
+
+NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 PRESETS = {
     "gs": {"range_neg": -64, "range_pos": 63, "step": 1.0},
@@ -36,7 +38,7 @@ def main():
     parser.add_argument("--range-neg", type=float, default=None)
     parser.add_argument("--range-pos", type=float, default=None)
     parser.add_argument("--step", type=_parse_step, default=None)
-    parser.add_argument("--max-m", type=int, default=16)
+    parser.add_argument("--max-channels", type=int, default=16)
     parser.add_argument(
         "--output", choices=["text", "json"], default="text"
     )
@@ -48,7 +50,7 @@ def main():
     range_pos = args.range_pos if args.range_pos is not None else p["range_pos"]
     step = args.step if args.step is not None else p["step"]
 
-    result = compute_edo(args.edo, range_neg, range_pos, step, args.max_m)
+    result = compute_edo(args.edo, range_neg, range_pos, step, args.max_channels)
 
     if args.output == "json":
         print(json.dumps(result))
@@ -88,7 +90,7 @@ def main():
             d["degree"],
             str(cents),
             d["channel"],
-            d["note_name"],
+            NOTE_NAMES[d["semitone"]],
             str(offset_cents),
             str(error),
         ])

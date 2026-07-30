@@ -23,7 +23,7 @@ nix run . -- --help
 | `--range-neg F` | Override preset negative range |
 | `--range-pos F` | Override preset positive range |
 | `--step F\|A/B` | Override preset step (supports fractions, e.g. `100/8192`) |
-| `--max-m N` | Max channels (default 16) |
+| `--max-channels N` | Max channels (default 16) |
 | `--output {text,json}` | Output format (default `text`) |
 
 ## Presets
