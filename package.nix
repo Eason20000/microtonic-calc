@@ -12,7 +12,7 @@ python3Packages.buildPythonApplication rec {
     tabulate
   ];
 
-  nativeBuildInputs = [ python3Packages.setuptools ];
+  nativeBuildInputs = [ python3Packages.hatchling ];
 
   meta.mainProgram = "mtcalc";
 

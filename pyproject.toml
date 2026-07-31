@@ -1,19 +1,18 @@
 [build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "microtonic-calc"
 version = "0.1.0"
-description = ""
+description = "n-EDO Scale Tune SysEx parameter calculator for MIDI devices"
 requires-python = ">=3.14"
+license = "GPL-3.0-only"
+license-files = ["LICEN[CS]E*"]
+readme = "README.md"
 dependencies = [
     "tabulate>=0.10.0",
 ]
 
 [project.scripts]
 mtcalc = "microtonic_calc.main:main"
-
-[tool.setuptools]
-packages = ["microtonic_calc"]
-package-dir = {"" = "src"}
