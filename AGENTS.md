@@ -26,7 +26,7 @@ python -m microtonic_calc.main --edo 53
 | File                          | Role                                                                                         |
 | ----------------------------- | -------------------------------------------------------------------------------------------- |
 | `src/microtonic_calc/calc.py` | Pure computation. `compute_edo(n, range_neg, range_pos, step, max_channels)` → dict. No I/O. |
-| `src/microtonic_calc/main.py` | CLI arg parsing, preset resolution, display. Derives `channel_count`, `max_error` itself.    |
+| `src/microtonic_calc/main.py` | CLI arg parsing, preset resolution, display.                                                 |
 
 ## Data contract
 

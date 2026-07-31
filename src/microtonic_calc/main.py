@@ -22,10 +22,6 @@ def gprint(table):
     print(tabulate(table, tablefmt="grid"))
 
 
-def _value_to_cents(val, step, bias):
-    return (val - bias) * step
-
-
 def main():
     parser = argparse.ArgumentParser(
         description="Calculate n-EDO Scale Tune parameters"
@@ -65,11 +61,10 @@ def main():
     label = "custom" if overridden else args.preset
 
     tuning = result["tuning"]
-    bias = tuning["bias"]
-    channel_count = len(tuning["data"])
 
     print(f"\n=== {result['edo']}-EDO (preset: {label}) ===")
-    print(f"Channels required: {channel_count}\n")
+    print(f"step: {tuning['step']}, bias: {tuning['bias']}")
+    print(f"Channels required: {len(tuning['data'])}\n")
 
     ch_header = [f"ch{c['channel']}" for c in tuning["data"]]
     table = [["note"] + ch_header]
@@ -77,39 +72,16 @@ def main():
         row = [name]
         for ch in tuning["data"]:
             v = ch["offsets"][ni]
-            row.append(
-                str(_value_to_cents(v, step, bias)) if v is not None else "N/A"
-            )
+            row.append(str(v) if v is not None else "N/A")
         table.append(row)
     print("Per-channel offsets:")
     gprint(table)
     print()
 
-    header = ["deg", "cents", "ch", "note", "offset", "error"]
-    rows = []
-    max_error = 0.0
-    for d in result["map"]:
-        cents = d["degree"] * 1200.0 / result["edo"]
-        offset_cents = _value_to_cents(d["value"], step, bias)
-        target_semi = (
-            int(cents / 100 + 0.5) if offset_cents < 0 else int(cents / 100)
-        )
-        error = cents - (target_semi * 100 + offset_cents)
-        max_error = max(max_error, abs(error))
-        rows.append(
-            [
-                d["degree"],
-                str(cents),
-                d["channel"],
-                NOTE_NAMES[d["semitone"]],
-                str(offset_cents),
-                str(error),
-            ]
-        )
-    print("Mapping (degree -> channel, note, offset):")
+    header = ["deg", "ch", "semitone"]
+    rows = [[d["degree"], d["channel"], d["semitone"]] for d in result["map"]]
+    print("Mapping (degree -> channel, semitone):")
     gprint([header] + rows)
-
-    print(f"Max error: {max_error} cents")
 
 
 if __name__ == "__main__":
