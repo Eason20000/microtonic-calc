@@ -31,12 +31,12 @@ python -m microtonic_calc.main --edo 53
 ## Data contract
 
 `src/microtonic_calc/calc.py` returns
-`{edo, tuning: {step, bias, data: [{channel, offsets: [12 x int_or_None}]}, map: [{degree, channel, semitone, value}]}`.
+`{edo, tuning: {step, bias, data: [{channel, offsets: [12 x int_or_None}]}, map: [{degree, channel, semitone}]}`.
 
 - `tuning.data[].offsets[]` are raw integers (bias + cents/step), ready to send
   to device
-- `map[].value` matches the channel's offset for that degree
-- Convert to cents: `(value - bias) * step`
+- `map[].semitone` indexes the channel's `offsets[]` slot for that degree
+- Convert to cents: `(offset - bias) * step`
 
 ## Rounding
 

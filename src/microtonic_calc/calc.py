@@ -68,7 +68,6 @@ def _try_assign(n, num_channels, range_neg, range_pos, step, bias):
                     "degree": i,
                     "channel": ch,
                     "semitone": note_in_oct,
-                    "value": value,
                 }
             )
             assigned = True
