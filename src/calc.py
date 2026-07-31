@@ -9,7 +9,7 @@ def _quantize(value, step):
     return _round_half_up(value / step) * step
 
 
-def _cents_to_sysex(cents, step, bias):
+def _cents_to_value(cents, step, bias):
     return _round_half_up(cents / step) + bias
 
 
@@ -51,17 +51,17 @@ def _try_assign(n, num_channels, range_neg, range_pos, step, bias):
         assigned = False
         for target_semi, offset in candidates:
             note_in_oct = target_semi % 12
-            sysex_val = _cents_to_sysex(offset, step, bias)
+            value = _cents_to_value(offset, step, bias)
             existing = channel_data[ch]["offsets"][note_in_oct]
-            if existing is not None and existing != sysex_val:
+            if existing is not None and existing != value:
                 continue
             if existing is None:
-                channel_data[ch]["offsets"][note_in_oct] = sysex_val
+                channel_data[ch]["offsets"][note_in_oct] = value
             map_entries.append({
                 "degree": i,
                 "channel": ch,
                 "semitone": note_in_oct,
-                "sysex_value": sysex_val,
+                "value": value,
             })
             assigned = True
             break
@@ -71,7 +71,7 @@ def _try_assign(n, num_channels, range_neg, range_pos, step, bias):
 
     return {
         "edo": n,
-        "sysex": {
+        "tuning": {
             "step": step,
             "bias": bias,
             "data": channel_data,

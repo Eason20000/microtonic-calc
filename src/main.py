@@ -22,7 +22,7 @@ def gprint(table):
     print(tabulate(table, tablefmt="grid"))
 
 
-def _sysex_to_cents(val, step, bias):
+def _value_to_cents(val, step, bias):
     return (val - bias) * step
 
 
@@ -58,20 +58,20 @@ def main():
 
     label = "custom" if overridden else args.preset
 
-    sysex = result["sysex"]
-    bias = sysex["bias"]
-    channel_count = len(sysex["data"])
+    tuning = result["tuning"]
+    bias = tuning["bias"]
+    channel_count = len(tuning["data"])
 
     print(f"\n=== {result['edo']}-EDO (preset: {label}) ===")
     print(f"Channels required: {channel_count}\n")
 
-    ch_header = [f"ch{c['channel']}" for c in sysex["data"]]
+    ch_header = [f"ch{c['channel']}" for c in tuning["data"]]
     table = [["note"] + ch_header]
     for ni, name in enumerate(NOTE_NAMES):
         row = [name]
-        for ch in sysex["data"]:
+        for ch in tuning["data"]:
             v = ch["offsets"][ni]
-            row.append(str(_sysex_to_cents(v, step, bias)) if v is not None else "N/A")
+            row.append(str(_value_to_cents(v, step, bias)) if v is not None else "N/A")
         table.append(row)
     print("Per-channel offsets:")
     gprint(table)
@@ -82,7 +82,7 @@ def main():
     max_error = 0.0
     for d in result["map"]:
         cents = d["degree"] * 1200.0 / result["edo"]
-        offset_cents = _sysex_to_cents(d["sysex_value"], step, bias)
+        offset_cents = _value_to_cents(d["value"], step, bias)
         target_semi = int(cents / 100 + 0.5) if offset_cents < 0 else int(cents / 100)
         error = cents - (target_semi * 100 + offset_cents)
         max_error = max(max_error, abs(error))

@@ -30,10 +30,10 @@ python -m src.main --edo 53
 
 ## Data contract
 
-`src/calc.py` returns `{edo, sysex: {step, bias, data: [{channel, offsets: [12 x int_or_None}]}, map: [{degree, channel, semitone, sysex_value}]}`.
+`src/calc.py` returns `{edo, tuning: {step, bias, data: [{channel, offsets: [12 x int_or_None}]}, map: [{degree, channel, semitone, value}]}`.
 
-- `sysex.data[].offsets[]` are raw integers (bias + cents/step), ready to send to device
-- `map[].sysex_value` matches the channel's offset for that degree
+- `tuning.data[].offsets[]` are raw integers (bias + cents/step), ready to send to device
+- `map[].value` matches the channel's offset for that degree
 - Convert to cents: `(value - bias) * step`
 
 ## Rounding
@@ -41,7 +41,7 @@ python -m src.main --edo 53
 **Never use Python's `round()`.** All rounding uses `_round_half_up = floor(x + 0.5)`:
 
 - `_quantize(value, step)` — truncate cents to nearest step
-- `_cents_to_sysex(cents, step, bias)` — round cents to integer sysex value
+- `_cents_to_value(cents, step, bias)` — round cents to integer tuning value
 - `t_round` (half-up) vs `t_floor` — two candidate semitone assignments per degree
 
 ## Presets
@@ -57,7 +57,7 @@ Explicit `--range-neg`/`--range-pos`/`--step` override the preset. Display label
 
 - Degrees are interleaved across channels: `i % channels`
 - `t_floor` candidate preferred (keeps note in same octave); fallback to `t_round`
-- If two degrees share a slot with the same quantized sysex value, they share successfully
+- If two degrees share a slot with the same quantized value, they share successfully
 - If no candidate fits, channels is incremented up to `--max-channels` (default 16)
 - `channels` is the result of the search, not pre-computed as `ceil(n/12)`
 
