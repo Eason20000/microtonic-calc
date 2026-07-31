@@ -1,7 +1,7 @@
 import argparse
 import json
 from tabulate import tabulate
-from calc import compute_edo
+from microtonic_calc.calc import compute_edo
 
 NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 

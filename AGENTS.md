@@ -6,7 +6,7 @@ n-EDO Scale Tune parameter calculator for MIDI devices.
 
 ```bash
 nix run . --option builders '' -- --edo 53
-python -m src.main --edo 53
+python -m microtonic_calc.main --edo 53
 ```
 
 ## CLI
@@ -25,12 +25,12 @@ python -m src.main --edo 53
 
 | File | Role |
 |---|---|
-| `src/calc.py` | Pure computation. `compute_edo(n, range_neg, range_pos, step, max_channels)` → dict. No I/O. |
-| `src/main.py` | CLI arg parsing, preset resolution, display. Derives `channel_count`, `max_error` itself. |
+| `src/microtonic_calc/calc.py` | Pure computation. `compute_edo(n, range_neg, range_pos, step, max_channels)` → dict. No I/O. |
+| `src/microtonic_calc/main.py` | CLI arg parsing, preset resolution, display. Derives `channel_count`, `max_error` itself. |
 
 ## Data contract
 
-`src/calc.py` returns `{edo, tuning: {step, bias, data: [{channel, offsets: [12 x int_or_None}]}, map: [{degree, channel, semitone, value}]}`.
+`src/microtonic_calc/calc.py` returns `{edo, tuning: {step, bias, data: [{channel, offsets: [12 x int_or_None}]}, map: [{degree, channel, semitone, value}]}`.
 
 - `tuning.data[].offsets[]` are raw integers (bias + cents/step), ready to send to device
 - `map[].value` matches the channel's offset for that degree

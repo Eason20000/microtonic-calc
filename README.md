@@ -13,7 +13,7 @@ pip install . && mtcalc --help
 Or run directly from source without installing:
 
 ```bash
-python -m src.main --help
+python -m microtonic_calc.main --help
 ```
 
 Or run via Nix:

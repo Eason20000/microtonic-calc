@@ -12,8 +12,8 @@ dependencies = [
 ]
 
 [project.scripts]
-mtcalc = "main:main"
+mtcalc = "microtonic_calc.main:main"
 
 [tool.setuptools]
-py-modules = ["main", "calc"]
-package-dir = {"": "src"}
+packages = ["microtonic_calc"]
+package-dir = {"" = "src"}
