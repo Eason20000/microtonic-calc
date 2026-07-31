@@ -23,42 +23,50 @@ python -m microtonic_calc.main --edo 53
 
 ## Architecture
 
-| File | Role |
-|---|---|
+| File                          | Role                                                                                         |
+| ----------------------------- | -------------------------------------------------------------------------------------------- |
 | `src/microtonic_calc/calc.py` | Pure computation. `compute_edo(n, range_neg, range_pos, step, max_channels)` → dict. No I/O. |
-| `src/microtonic_calc/main.py` | CLI arg parsing, preset resolution, display. Derives `channel_count`, `max_error` itself. |
+| `src/microtonic_calc/main.py` | CLI arg parsing, preset resolution, display. Derives `channel_count`, `max_error` itself.    |
 
 ## Data contract
 
-`src/microtonic_calc/calc.py` returns `{edo, tuning: {step, bias, data: [{channel, offsets: [12 x int_or_None}]}, map: [{degree, channel, semitone, value}]}`.
+`src/microtonic_calc/calc.py` returns
+`{edo, tuning: {step, bias, data: [{channel, offsets: [12 x int_or_None}]}, map: [{degree, channel, semitone, value}]}`.
 
-- `tuning.data[].offsets[]` are raw integers (bias + cents/step), ready to send to device
+- `tuning.data[].offsets[]` are raw integers (bias + cents/step), ready to send
+  to device
 - `map[].value` matches the channel's offset for that degree
 - Convert to cents: `(value - bias) * step`
 
 ## Rounding
 
-**Never use Python's `round()`.** All rounding uses `_round_half_up = floor(x + 0.5)`:
+**Never use Python's `round()`.** All rounding uses
+`_round_half_up = floor(x + 0.5)`:
 
 - `_quantize(value, step)` — truncate cents to nearest step
 - `_cents_to_value(cents, step, bias)` — round cents to integer tuning value
-- `t_round` (half-up) vs `t_floor` — two candidate semitone assignments per degree
+- `t_round` (half-up) vs `t_floor` — two candidate semitone assignments per
+  degree
 
 ## Presets
 
-| Name | range_neg | range_pos | step |
-|---|---|---|---|
-| `gs` (default) | -64 | +63 | 1.0 |
-| `mts-2byte` | -100 | +100 | 100/8192 |
+| Name           | range_neg | range_pos | step     |
+| -------------- | --------- | --------- | -------- |
+| `gs` (default) | -64       | +63       | 1.0      |
+| `mts-2byte`    | -100      | +100      | 100/8192 |
 
-Explicit `--range-neg`/`--range-pos`/`--step` override the preset. Display label shows `custom` when any override is active.
+Explicit `--range-neg`/`--range-pos`/`--step` override the preset. Display label
+shows `custom` when any override is active.
 
 ## Slot assignment
 
 - Degrees are interleaved across channels: `i % channels`
-- `t_floor` candidate preferred (keeps note in same octave); fallback to `t_round`
-- If two degrees share a slot with the same quantized value, they share successfully
-- If no candidate fits, channels is incremented up to `--max-channels` (default 16)
+- `t_floor` candidate preferred (keeps note in same octave); fallback to
+  `t_round`
+- If two degrees share a slot with the same quantized value, they share
+  successfully
+- If no candidate fits, channels is incremented up to `--max-channels` (default
+  16\)
 - `channels` is the result of the search, not pre-computed as `ceil(n/12)`
 
 ## Commit style

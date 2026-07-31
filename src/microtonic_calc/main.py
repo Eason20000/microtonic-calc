@@ -32,25 +32,31 @@ def main():
     )
     parser.add_argument("--edo", type=int, required=True)
     parser.add_argument(
-        "--preset", choices=list(PRESETS), default="gs",
-        help="gs (default, -64/+63, step 1) | mts-2byte (-100/+100, step 100/8192)"
+        "--preset",
+        choices=list(PRESETS),
+        default="gs",
+        help="gs (default, -64/+63, step 1) | mts-2byte (-100/+100, step 100/8192)",
     )
     parser.add_argument("--range-neg", type=float, default=None)
     parser.add_argument("--range-pos", type=float, default=None)
     parser.add_argument("--step", type=_parse_step, default=None)
     parser.add_argument("--max-channels", type=int, default=16)
-    parser.add_argument(
-        "--output", choices=["text", "json"], default="text"
-    )
+    parser.add_argument("--output", choices=["text", "json"], default="text")
     args = parser.parse_args()
 
     p = PRESETS[args.preset]
-    overridden = args.range_neg is not None or args.range_pos is not None or args.step is not None
+    overridden = (
+        args.range_neg is not None
+        or args.range_pos is not None
+        or args.step is not None
+    )
     range_neg = args.range_neg if args.range_neg is not None else p["range_neg"]
     range_pos = args.range_pos if args.range_pos is not None else p["range_pos"]
     step = args.step if args.step is not None else p["step"]
 
-    result = compute_edo(args.edo, range_neg, range_pos, step, args.max_channels)
+    result = compute_edo(
+        args.edo, range_neg, range_pos, step, args.max_channels
+    )
 
     if args.output == "json":
         print(json.dumps(result))
@@ -71,7 +77,9 @@ def main():
         row = [name]
         for ch in tuning["data"]:
             v = ch["offsets"][ni]
-            row.append(str(_value_to_cents(v, step, bias)) if v is not None else "N/A")
+            row.append(
+                str(_value_to_cents(v, step, bias)) if v is not None else "N/A"
+            )
         table.append(row)
     print("Per-channel offsets:")
     gprint(table)
@@ -83,17 +91,21 @@ def main():
     for d in result["map"]:
         cents = d["degree"] * 1200.0 / result["edo"]
         offset_cents = _value_to_cents(d["value"], step, bias)
-        target_semi = int(cents / 100 + 0.5) if offset_cents < 0 else int(cents / 100)
+        target_semi = (
+            int(cents / 100 + 0.5) if offset_cents < 0 else int(cents / 100)
+        )
         error = cents - (target_semi * 100 + offset_cents)
         max_error = max(max_error, abs(error))
-        rows.append([
-            d["degree"],
-            str(cents),
-            d["channel"],
-            NOTE_NAMES[d["semitone"]],
-            str(offset_cents),
-            str(error),
-        ])
+        rows.append(
+            [
+                d["degree"],
+                str(cents),
+                d["channel"],
+                NOTE_NAMES[d["semitone"]],
+                str(offset_cents),
+                str(error),
+            ]
+        )
     print("Mapping (degree -> channel, note, offset):")
     gprint([header] + rows)
 

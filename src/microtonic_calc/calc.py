@@ -29,7 +29,9 @@ def compute_edo(n, range_neg=-64, range_pos=63, step=1.0, max_channels=16):
 
 
 def _try_assign(n, num_channels, range_neg, range_pos, step, bias):
-    channel_data = [{"channel": ch, "offsets": [None] * 12} for ch in range(num_channels)]
+    channel_data = [
+        {"channel": ch, "offsets": [None] * 12} for ch in range(num_channels)
+    ]
     map_entries = []
 
     for i in range(n):
@@ -40,7 +42,11 @@ def _try_assign(n, num_channels, range_neg, range_pos, step, bias):
         off_floor = _quantize(cents - t_floor * 100, step)
 
         t_round = _round_half_up(cents / 100)
-        off_round = _quantize(cents - t_round * 100, step) if t_round != t_floor else None
+        off_round = (
+            _quantize(cents - t_round * 100, step)
+            if t_round != t_floor
+            else None
+        )
 
         candidates = []
         if range_neg <= off_floor <= range_pos:
@@ -57,12 +63,14 @@ def _try_assign(n, num_channels, range_neg, range_pos, step, bias):
                 continue
             if existing is None:
                 channel_data[ch]["offsets"][note_in_oct] = value
-            map_entries.append({
-                "degree": i,
-                "channel": ch,
-                "semitone": note_in_oct,
-                "value": value,
-            })
+            map_entries.append(
+                {
+                    "degree": i,
+                    "channel": ch,
+                    "semitone": note_in_oct,
+                    "value": value,
+                }
+            )
             assigned = True
             break
 

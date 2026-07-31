@@ -10,9 +10,7 @@ requires-python = ">=3.14"
 license = "GPL-3.0-only"
 license-files = ["LICEN[CS]E*"]
 readme = "README.md"
-dependencies = [
-    "tabulate>=0.10.0",
-]
+dependencies = ["tabulate>=0.10.0"]
 
 [project.scripts]
 mtcalc = "microtonic_calc.main:main"

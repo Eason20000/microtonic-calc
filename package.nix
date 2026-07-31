@@ -1,4 +1,8 @@
-{ self, lib, python3Packages }:
+{
+  self,
+  lib,
+  python3Packages,
+}:
 
 python3Packages.buildPythonApplication rec {
   pname = (lib.importTOML (src + "/pyproject.toml")).project.name;
