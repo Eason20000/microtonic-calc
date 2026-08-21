@@ -14,6 +14,8 @@ python3Packages.buildPythonApplication rec {
 
   dependencies = with python3Packages; [
     tabulate
+    mido
+    python-rtmidi
   ];
 
   nativeBuildInputs = [ python3Packages.hatchling ];
