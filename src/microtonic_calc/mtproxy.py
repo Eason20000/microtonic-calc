@@ -23,6 +23,7 @@ def parse_args():
     parser.add_argument("--range-pos", type=float, default=None)
     parser.add_argument("--step", type=_parse_step, default=None)
     parser.add_argument("--max-channels", type=int, default=16)
+    parser.add_argument("--key-offset", type=int, default=0)
     parser.add_argument(
         "--list-ports",
         action="store_true",
@@ -74,6 +75,7 @@ def main():
         degree_map=degree_map,
         input_port_name=args.input_port,
         output_port_name=args.output_port,
+        key_offset=args.key_offset,
     )
 
     print(f"Proxying {result['edo']}-EDO GS Scale Tuning", file=sys.stderr)
