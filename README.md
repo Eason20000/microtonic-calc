@@ -22,6 +22,12 @@ Or run via Nix:
 nix run . -- --help
 ```
 
+For the MIDI proxy:
+
+```bash
+nix shell . -c mtproxy -- --edo 53
+```
+
 ## CLI
 
 | Flag                      | Description                                                |
@@ -33,6 +39,24 @@ nix run . -- --help
 | `--step F\|A/B`           | Override preset step (supports fractions, e.g. `100/8192`) |
 | `--max-channels N`        | Max channels (default 16)                                  |
 | `--output {text,json}`    | Output format (default `text`)                             |
+
+## MIDI Proxy
+
+The `mtproxy` command runs a real-time MIDI proxy that applies n-EDO GS Scale
+Tuning.
+
+```bash
+mtproxy --edo 53 --input-port "MIDI In" --output-port "MIDI Out"
+```
+
+| Flag                      | Description                        |
+| ------------------------- | ---------------------------------- |
+| `--edo N`                 | EDO degree count (required)        |
+| `--input-port NAME`       | Input MIDI port (default: system)  |
+| `--output-port NAME`      | Output MIDI port (default: system) |
+| `--preset {gs,mts-2byte}` | Preset (default `gs`)              |
+| `--key-offset N`          | Transpose input notes (default 0)  |
+| `--list-ports`            | List available MIDI ports and exit |
 
 ## Presets
 

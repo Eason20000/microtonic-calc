@@ -23,10 +23,13 @@ python -m microtonic_calc.main --edo 53
 
 ## Architecture
 
-| File                          | Role                                                                                         |
-| ----------------------------- | -------------------------------------------------------------------------------------------- |
-| `src/microtonic_calc/calc.py` | Pure computation. `compute_edo(n, range_neg, range_pos, step, max_channels)` → dict. No I/O. |
-| `src/microtonic_calc/main.py` | CLI arg parsing, preset resolution, display.                                                 |
+| File                              | Role                                                                                         |
+| --------------------------------- | -------------------------------------------------------------------------------------------- |
+| `src/microtonic_calc/calc.py`     | Pure computation. `compute_edo(n, range_neg, range_pos, step, max_channels)` → dict. No I/O. |
+| `src/microtonic_calc/main.py`     | CLI arg parsing, preset resolution, display.                                                 |
+| `src/microtonic_calc/proxy.py`    | Real-time MIDI proxy core. Forwards note messages with n-EDO scale tuning applied.           |
+| `src/microtonic_calc/gs_sysex.py` | GS Scale Tuning SysEx message builder.                                                       |
+| `src/microtonic_calc/mtproxy.py`  | CLI entry point for `mtproxy`.                                                               |
 
 ## Data contract
 
