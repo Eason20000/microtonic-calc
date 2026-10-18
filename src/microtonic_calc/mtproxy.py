@@ -2,34 +2,56 @@ import argparse
 import sys
 
 import mido
+from mido import Message, open_input, open_output
+
 from microtonic_calc.calc import compute_edo
-from microtonic_calc.proxy import MidiProxy
-from microtonic_calc.main import PRESETS, _parse_step
+from microtonic_calc.cli import add_common_args, resolve
+
+ROLAND_ID = (0x41, 0x10)
+GS_MODEL = 0x42
+DEVICE_ID = 0x12
+PARAM_ADDR = 0x40
+FIXED_BYTE = 0x40
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Real-time MIDI proxy for n-EDO GS Scale Tuning"
-    )
-    parser.add_argument("--edo", type=int, help="EDO degree count")
-    parser.add_argument(
-        "--input-port", default=None, help="Input MIDI port name"
-    )
-    parser.add_argument(
-        "--output-port", default=None, help="Output MIDI port name"
-    )
-    parser.add_argument("--preset", choices=list(PRESETS), default="gs")
-    parser.add_argument("--range-neg", type=float, default=None)
-    parser.add_argument("--range-pos", type=float, default=None)
-    parser.add_argument("--step", type=_parse_step, default=None)
-    parser.add_argument("--max-channels", type=int, default=16)
-    parser.add_argument("--key-offset", type=int, default=0)
-    parser.add_argument(
-        "--list-ports",
-        action="store_true",
-        help="List available MIDI ports and exit",
-    )
-    return parser.parse_args()
+def build_gs_scale_tuning_sysex(channel, offsets):
+    addr = [PARAM_ADDR, 0x11 + channel, FIXED_BYTE]
+    filled = [o if o is not None else 64 for o in offsets]
+    checksum = (128 - sum(addr + filled) % 128) & 127
+    data = list(ROLAND_ID) + [GS_MODEL, DEVICE_ID] + addr + filled + [checksum]
+    return Message("sysex", data=tuple(data))
+
+
+class MidiProxy:
+    def __init__(
+        self, edo, data, degree_map, input_port, output_port, key_offset
+    ):
+        self.edo = edo
+        self.data = data
+        self.degree_map = degree_map
+        self.key_offset = key_offset
+        self.inport = open_input(input_port)
+        self.outport = open_output(output_port)
+
+    def send_tuning(self):
+        for channel, offsets in enumerate(self.data):
+            self.outport.send(build_gs_scale_tuning_sysex(channel, offsets))
+
+    def run(self):
+        self.send_tuning()
+        try:
+            for msg in self.inport:
+                if msg.type not in ("note_on", "note_off"):
+                    continue
+                octave, degree = divmod(msg.note + self.key_offset, self.edo)
+                channel, semitone = self.degree_map[degree]
+                note = semitone + 12 * octave
+                self.outport.send(msg.copy(channel=channel, note=note))
+        except KeyboardInterrupt:
+            pass
+        finally:
+            self.inport.close()
+            self.outport.close()
 
 
 def list_ports():
@@ -42,7 +64,19 @@ def list_ports():
 
 
 def main():
-    args = parse_args()
+    parser = argparse.ArgumentParser(
+        description="Real-time MIDI proxy for n-EDO GS Scale Tuning"
+    )
+    add_common_args(parser)
+    parser.add_argument("--input-port", default=None, help="Input MIDI port")
+    parser.add_argument("--output-port", default=None, help="Output MIDI port")
+    parser.add_argument("--key-offset", type=int, default=0)
+    parser.add_argument(
+        "--list-ports",
+        action="store_true",
+        help="List available MIDI ports and exit",
+    )
+    args = parser.parse_args()
 
     if args.list_ports:
         list_ports()
@@ -52,36 +86,27 @@ def main():
         print("Error: --edo is required for proxy mode", file=sys.stderr)
         sys.exit(1)
 
-    p = PRESETS[args.preset]
-    range_neg = args.range_neg if args.range_neg is not None else p["range_neg"]
-    range_pos = args.range_pos if args.range_pos is not None else p["range_pos"]
-    step = args.step if args.step is not None else p["step"]
-
+    p = resolve(args)
     result = compute_edo(
-        args.edo, range_neg, range_pos, step, args.max_channels
+        args.edo, p["range_neg"], p["range_pos"], p["step"], args.max_channels
     )
-
     degree_map = {
-        entry["degree"]: {
-            "channel": entry["channel"],
-            "semitone": entry["semitone"],
-        }
-        for entry in result["map"]
+        d["degree"]: (d["channel"], d["semitone"]) for d in result["map"]
     }
 
     proxy = MidiProxy(
         edo=result["edo"],
-        tuning_data=result["tuning"]["data"],
+        data=result["data"],
         degree_map=degree_map,
-        input_port_name=args.input_port,
-        output_port_name=args.output_port,
+        input_port=args.input_port,
+        output_port=args.output_port,
         key_offset=args.key_offset,
     )
 
     print(f"Proxying {result['edo']}-EDO GS Scale Tuning", file=sys.stderr)
     print(f"Input:  {args.input_port or '(default)'}", file=sys.stderr)
     print(f"Output: {args.output_port or '(default)'}", file=sys.stderr)
-    print(f"Channels: {len(result['tuning']['data'])}", file=sys.stderr)
+    print(f"Channels: {len(result['data'])}", file=sys.stderr)
     print("Press Ctrl+C to stop", file=sys.stderr)
     print("---", file=sys.stderr)
 

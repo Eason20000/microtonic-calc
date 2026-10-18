@@ -23,33 +23,33 @@ python -m microtonic_calc.main --edo 53
 
 ## Architecture
 
-| File                              | Role                                                                                         |
-| --------------------------------- | -------------------------------------------------------------------------------------------- |
-| `src/microtonic_calc/calc.py`     | Pure computation. `compute_edo(n, range_neg, range_pos, step, max_channels)` → dict. No I/O. |
-| `src/microtonic_calc/main.py`     | CLI arg parsing, preset resolution, display.                                                 |
-| `src/microtonic_calc/proxy.py`    | Real-time MIDI proxy core. Forwards note messages with n-EDO scale tuning applied.           |
-| `src/microtonic_calc/gs_sysex.py` | GS Scale Tuning SysEx message builder.                                                       |
-| `src/microtonic_calc/mtproxy.py`  | CLI entry point for `mtproxy`.                                                               |
+| File                             | Role                                                                       |
+| -------------------------------- | -------------------------------------------------------------------------- |
+| `src/microtonic_calc/calc.py`    | Pure computation. `compute_edo(...)` → dict. No I/O, no project imports.   |
+| `src/microtonic_calc/cli.py`     | Shared CLI helpers: `PRESETS`, `parse_step`, `add_common_args`, `resolve`. |
+| `src/microtonic_calc/main.py`    | `mtcalc` CLI: argument parsing and table display.                          |
+| `src/microtonic_calc/mtproxy.py` | `mtproxy` CLI: real-time MIDI proxy core + GS Scale Tuning SysEx builder.  |
 
 ## Data contract
 
 `src/microtonic_calc/calc.py` returns
-`{edo, tuning: {step, bias, data: [{channel, offsets: [12 x int_or_None}]}, map: [{degree, channel, semitone}]}`.
+`{edo, step, bias, data: [[12 x int_or_None] per channel], map: [{degree, channel, semitone}]}`.
 
-- `tuning.data[].offsets[]` are raw integers (bias + cents/step), ready to send
-  to device
-- `map[].semitone` indexes the channel's `offsets[]` slot for that degree
-- Convert to cents: `(offset - bias) * step`
+- `data[channel][slot]` are raw integers (bias + cents/step), ready to send to
+  device
+- `map[].semitone` is the absolute semitone within the EDO octave; the channel's
+  `data[channel]` slot is `semitone % 12`
+- Convert to cents: `(value - bias) * step`
 
 ## Rounding
 
 **Never use Python's `round()`.** All rounding uses
 `_round_half_up = floor(x + 0.5)`:
 
-- `_quantize(value, step)` — truncate cents to nearest step
-- `_cents_to_value(cents, step, bias)` — round cents to integer tuning value
-- `t_round` (half-up) vs `t_floor` — two candidate semitone assignments per
-  degree
+- `_round_half_up((cents - semi * 100) / step) + bias` — round cents to an
+  integer tuning value
+- `t_floor` (`floor(cents/100)`) vs `t_round` (`_round_half_up(cents/100)`) —
+  two candidate semitone assignments per degree
 
 ## Presets
 
@@ -66,8 +66,7 @@ shows `custom` when any override is active.
 - Degrees are interleaved across channels: `i % channels`
 - `t_floor` candidate preferred (keeps note in same octave); fallback to
   `t_round`
-- If two degrees share a slot with the same quantized value, they share
-  successfully
+- If two degrees share a slot with the same value, they share successfully
 - If no candidate fits, channels is incremented up to `--max-channels` (default
   16\)
 - `channels` is the result of the search, not pre-computed as `ceil(n/12)`
