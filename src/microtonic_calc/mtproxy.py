@@ -22,6 +22,12 @@ def build_gs_scale_tuning_sysex(channel, offsets):
     return Message("sysex", data=tuple(data))
 
 
+def map_note(edo, degree_map, key_offset, note):
+    octave, degree = divmod(note + key_offset, edo)
+    channel, semitone = degree_map[degree]
+    return channel, min(127, max(0, semitone + 12 * octave))
+
+
 class MidiProxy:
     def __init__(
         self, edo, data, degree_map, input_port, output_port, key_offset
@@ -43,9 +49,9 @@ class MidiProxy:
             for msg in self.inport:
                 if msg.type not in ("note_on", "note_off"):
                     continue
-                octave, degree = divmod(msg.note + self.key_offset, self.edo)
-                channel, semitone = self.degree_map[degree]
-                note = semitone + 12 * octave
+                channel, note = map_note(
+                    self.edo, self.degree_map, self.key_offset, msg.note
+                )
                 self.outport.send(msg.copy(channel=channel, note=note))
         except KeyboardInterrupt:
             pass

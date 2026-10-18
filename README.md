@@ -49,6 +49,9 @@ Tuning.
 mtproxy --edo 53 --input-port "MIDI In" --output-port "MIDI Out"
 ```
 
+Output notes that fall outside the MIDI range (possible with `--edo` below 12 or
+a non-zero `--key-offset`) are clamped to `0..127`.
+
 | Flag                      | Description                        |
 | ------------------------- | ---------------------------------- |
 | `--edo N`                 | EDO degree count (required)        |
